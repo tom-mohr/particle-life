@@ -15,3 +15,12 @@ dependencies {
     // JOML
     implementation 'org.joml:joml:1.10.1'
 }
+
+publishing {
+    publications {
+        particleLife(MavenPublication) {
+            artifactId 'particle-life'
+            from components.java
+        }
+    }
+}
