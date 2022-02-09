@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'java-library'  // need this for "api" dependencies
     id 'maven-publish'
 }
 
@@ -11,9 +12,7 @@ repositories {
 }
 
 dependencies {
-
-    // JOML
-    implementation 'org.joml:joml:1.10.1'
+    api 'org.joml:joml:1.10.1'  // is exposed, e.g. by com.particle_life.Accelerator
 }
 
 publishing {
