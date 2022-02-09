@@ -232,7 +232,7 @@ public class Physics {
      *     p.startLoop();
      *     while (true) {
      *         if (button.pressed()) {
-     *             p.enqueue(() -> p.wrap = false);
+     *             p.enqueue(() -> p.settings.wrap = false);
      *         }
      *     }
      *     p.stopLoop();
