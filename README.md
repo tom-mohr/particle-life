@@ -25,7 +25,7 @@ repositories {
 }
 
 dependencies {
-    implementation "com.github.tom-mohr:particle-life:v1.0.0"
+    implementation "com.github.tom-mohr:particle-life:v1.0.1"
 }
 ```
 
