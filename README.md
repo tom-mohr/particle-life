@@ -6,6 +6,7 @@ It can be configured to use the rules of Particle Life, a particle system showin
 
 Check out [github.com/tom-mohr/particle-life-app](https://github.com/tom-mohr/particle-life-app) to see this framework in action.
 
+
 # History
 
 In 2014 or earlier, [Jeffrey Ventrella](https://en.wikipedia.org/wiki/Jeffrey_Ventrella) created [Clusters](https://ventrella.com/Clusters/).
@@ -15,6 +16,8 @@ This video popularized the idea and introduced the name Particle Life, referring
 
 
 # Usage
+
+This project requires Java 16 or higher.
 
 This repository is intended to be included in other projects as a [Gradle](https://gradle.org/) dependency.
 Add the following to your `build.gradle` file:
