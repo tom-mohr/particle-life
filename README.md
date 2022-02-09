@@ -52,28 +52,30 @@ To run the simulation, you have to choose between two updating schemes:
 1. Synchronous updating:
     ```Java
     while (true) {
-    
-        p.update();  // run the simulaton
-        
+
+        p.update(0.02);  // run the simulaton
+
         // simulation step completed
-        
+
         if (button.pressed()) {
-            p.wrap = false;  // modify state of physics now
+            p.settings.wrap = false;  // modify state of physics now
         }
     }
-    p.stopLoop()
     ```
 
 2. Asynchronous updating:
     ```Java
     p.startLoop();
+    
     while (true) {
+    
         if (button.pressed()) {
             // simulation could be running right now
-            p.enqueue(() -> p.wrap = false);  // modify state as soon as the simulation step is completed
+            p.enqueue(() -> p.settings.wrap = false);  // modify state as soon as the simulation step is completed
         }
     }
-    p.stopLoop()
+    
+    p.stopLoop();
     ```
 
 The second approach (asynchronous updating) is recommended if you have a UI that can take user input while the simulation is running.
