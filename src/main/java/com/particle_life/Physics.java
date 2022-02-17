@@ -304,17 +304,19 @@ public class Physics {
         } else if (settings.n != particles.length) {
             // strategy: if the array size changed, try to keep most of the particles
 
-            // randomly shuffle particles first
-            // (otherwise, the container layout becomes visible)
-            shuffleParticles();
-
             Particle[] newParticles = new Particle[settings.n];
 
             if (settings.n < particles.length) {  // array becomes shorter
+
+                // randomly shuffle particles first
+                // (otherwise, the container layout becomes visible)
+                shuffleParticles();
+
                 // copy previous array as far as possible
                 for (int i = 0; i < settings.n; i++) {
                     newParticles[i] = particles[i];
                 }
+
             } else {  // array becomes longer
                 // copy old array and add particles to the end
                 for (int i = 0; i < particles.length; i++) {
