@@ -273,8 +273,8 @@ public class Physics {
     // PUBLIC CONTROL METHODS:
 
     /**
-     * Call this to initialize particles or when the particle size changed.
-     * If the particle size changed, new particles will be created using the active position setter.
+     * Call this to initialize particles or when the particle count changed.
+     * If the particle count changed, new particles will be created using the active position setter.
      */
     public void setPositions() {
         Arrays.stream(particles).forEach(this::setPosition);
@@ -291,7 +291,7 @@ public class Physics {
     // PRIVATE METHODS:
 
     /**
-     * Call this to initialize particles or when the particle size (n) changed.
+     * Call this to initialize particles or when the particle count (n) changed.
      * Will keep as many particles unchanged as possible.
      * New particles will be created using the active position setter.
      */
