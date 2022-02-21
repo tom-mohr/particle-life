@@ -20,7 +20,7 @@ public class PhysicsSettings {
      * <p>This won't have any effect on the actual framerate returned by {@link Physics#getActualDt()}.
      */
     public double maxDt = 1.0 / 20.0;
-    public Matrix matrix;
+    public Matrix matrix = new DefaultMatrix(3);
 
     public PhysicsSettings() {
     }
