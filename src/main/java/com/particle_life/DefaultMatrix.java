@@ -58,4 +58,27 @@ public class DefaultMatrix implements Matrix {
 
         return copy;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Matrix m) {
+
+            if (m.size() != size) {
+                return false;
+            }
+
+            for (int i = 0; i < size; i++) {
+                for (int j = 0; j < size; j++) {
+                    if (m.get(i, j) != get(i, j)) {
+                        return false;
+                    }
+                }
+            }
+
+        } else {
+            return false;
+        }
+
+        return true;
+    }
 }

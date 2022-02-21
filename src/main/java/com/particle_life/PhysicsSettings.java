@@ -40,4 +40,24 @@ public class PhysicsSettings {
 
         return p;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof PhysicsSettings s) {
+
+            if (s.n != n) return false;
+            if (s.wrap != wrap) return false;
+            if (s.rmax != rmax) return false;
+            if (s.friction != friction) return false;
+            if (s.forceFactor != forceFactor) return false;
+            if (s.autoDt != autoDt) return false;
+            if (s.fallbackDt != fallbackDt) return false;
+            if (s.maxDt != maxDt) return false;
+            if (!s.matrix.equals(matrix)) return false;
+
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
