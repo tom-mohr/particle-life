@@ -1,4 +1,4 @@
-# 🦠 Particle Life
+# 🦠 Particle Life Framework
 
 A Java framework that can simulate a variety of particle systems. It uses space partitioning and parallelization to achieve a significant speedup.
 
