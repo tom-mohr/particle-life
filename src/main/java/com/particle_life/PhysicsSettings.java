@@ -22,7 +22,7 @@ public class PhysicsSettings {
     public double maxDt = 1.0 / 20.0;
     public Matrix matrix;
 
-    PhysicsSettings() {
+    public PhysicsSettings() {
     }
 
     public PhysicsSettings deepCopy() {
