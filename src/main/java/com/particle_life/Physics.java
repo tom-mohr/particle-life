@@ -258,12 +258,12 @@ public class Physics {
 
         makeContainers();
 
-        ThreadUtility.distributeLoadEvenly(settings.n, preferredNumberOfThreads, i -> {
+        ThreadUtility.distributeLoadEvenly(particles.length, preferredNumberOfThreads, i -> {
             if (threadShouldAbort.get()) return false;
             updateV(i, dt);
             return true;
         });
-        ThreadUtility.distributeLoadEvenly(settings.n, preferredNumberOfThreads, i -> {
+        ThreadUtility.distributeLoadEvenly(particles.length, preferredNumberOfThreads, i -> {
             if (threadShouldAbort.get()) return false;
             updateX(i, dt);
             return true;
@@ -414,8 +414,8 @@ public class Physics {
             containers = new int[nx * ny];
         }
         Arrays.fill(containers, 0);
-        if (particlesBuffer == null || particlesBuffer.length != settings.n) {
-            particlesBuffer = new Particle[settings.n];
+        if (particlesBuffer == null || particlesBuffer.length != particles.length) {
+            particlesBuffer = new Particle[particles.length];
         }
 
         // calculate container capacity
