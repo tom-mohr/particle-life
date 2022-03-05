@@ -81,7 +81,7 @@ public class Physics {
         makeContainerNeighborhood();
 
         generateMatrix();
-        ensureParticles();  // uses current position setter
+        setParticleCount(10000);  // uses current position setter to create particles
     }
 
     private void calcNxNy() {
@@ -144,9 +144,6 @@ public class Physics {
         while (!commandQueue.isEmpty()) {
             Runnable cmd = commandQueue.removeFirst();
             cmd.run();
-
-            // command could have changed n, so ensure correct particle array size
-            ensureParticles();
         }
     }
 
@@ -244,8 +241,6 @@ public class Physics {
 
         processCommandQueue();
 
-        ensureParticles();  // for synchronous updating (when command queue is not used)
-
         Runnable onceCommand = once.getAndSet(null);
         if (onceCommand != null) onceCommand.run();
 
@@ -291,29 +286,34 @@ public class Physics {
     // PRIVATE METHODS:
 
     /**
-     * Call this to initialize particles or when the particle count (n) changed.
-     * Will keep as many particles unchanged as possible.
+     * Set the size of the particle array.<br><br>
+     * If the particle array is null, a new array will be created.
+     * If n is greater than the current particle array size, new particles will be created.
+     * If n is smaller than the current particle array size, random particles will be removed.
+     * In that case, the order of the particles in the array will be random afterwards.<br>
      * New particles will be created using the active position setter.
+     * 
+     * @param n The new number of particles. Must be 0 or greater.
      */
-    private void ensureParticles() {
+    public void setParticleCount(int n) {
         if (particles == null) {
-            particles = new Particle[settings.n];
-            for (int i = 0; i < settings.n; i++) {
+            particles = new Particle[n];
+            for (int i = 0; i < n; i++) {
                 particles[i] = generateParticle();
             }
-        } else if (settings.n != particles.length) {
+        } else if (n != particles.length) {
             // strategy: if the array size changed, try to keep most of the particles
 
-            Particle[] newParticles = new Particle[settings.n];
+            Particle[] newParticles = new Particle[n];
 
-            if (settings.n < particles.length) {  // array becomes shorter
+            if (n < particles.length) {  // array becomes shorter
 
                 // randomly shuffle particles first
                 // (otherwise, the container layout becomes visible)
                 shuffleParticles();
 
                 // copy previous array as far as possible
-                for (int i = 0; i < settings.n; i++) {
+                for (int i = 0; i < n; i++) {
                     newParticles[i] = particles[i];
                 }
 
@@ -322,7 +322,7 @@ public class Physics {
                 for (int i = 0; i < particles.length; i++) {
                     newParticles[i] = particles[i];
                 }
-                for (int i = particles.length; i < settings.n; i++) {
+                for (int i = particles.length; i < n; i++) {
                     newParticles[i] = generateParticle();
                 }
             }
