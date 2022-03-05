@@ -388,15 +388,15 @@ public class Physics {
     }
 
     protected final void setPosition(Particle p) {
-        positionSetter.set(p.x, p.type, settings.matrix.size());
-        Range.wrap(p.x);
-        p.v.x = 0;
-        p.v.y = 0;
-        p.v.z = 0;
+        positionSetter.set(p.position, p.type, settings.matrix.size());
+        Range.wrap(p.position);
+        p.velocity.x = 0;
+        p.velocity.y = 0;
+        p.velocity.z = 0;
     }
 
     protected final void setType(Particle p) {
-        p.type = typeSetter.getType(new Vector3d(p.x), new Vector3d(p.v), p.type, settings.matrix.size());
+        p.type = typeSetter.getType(new Vector3d(p.position), new Vector3d(p.velocity), p.type, settings.matrix.size());
     }
 
     private void makeContainers() {
@@ -420,7 +420,7 @@ public class Physics {
 
         // calculate container capacity
         for (Particle p : particles) {
-            int ci = getContainerIndex(p.x);
+            int ci = getContainerIndex(p.position);
             containers[ci]++;
         }
 
@@ -434,7 +434,7 @@ public class Physics {
 
         // fill particles into containers
         for (Particle p : particles) {
-            int ci = getContainerIndex(p.x);
+            int ci = getContainerIndex(p.position);
             int i = containers[ci];
             particlesBuffer[i] = p;
             containers[ci]++;  // for next access
@@ -491,10 +491,10 @@ public class Physics {
         Particle p = particles[i];
 
         // apply friction before adding new velocity
-        p.v.mul(Math.pow(settings.friction, dt));
+        p.velocity.mul(Math.pow(settings.friction, dt));
 
-        int cx0 = (int) Math.floor((p.x.x + 1) / containerSize);
-        int cy0 = (int) Math.floor((p.x.y + 1) / containerSize);
+        int cx0 = (int) Math.floor((p.position.x + 1) / containerSize);
+        int cy0 = (int) Math.floor((p.position.y + 1) / containerSize);
 
         for (int[] containerNeighbor : containerNeighborhood) {
             int cx = wrapContainerX(cx0 + containerNeighbor[0]);
@@ -517,7 +517,7 @@ public class Physics {
 
                 Particle q = particles[j];
 
-                Vector3d relativeX = connection(p.x, q.x);
+                Vector3d relativeX = connection(p.position, q.position);
 
                 double distanceSquared = relativeX.lengthSquared();
                 // only check particles that are closer than rmax
@@ -526,7 +526,7 @@ public class Physics {
                     relativeX.div(settings.rmax);
                     Vector3d deltaV = accelerator.accelerate(settings.matrix.get(p.type, q.type), relativeX);
                     // apply force as acceleration
-                    p.v.add(deltaV.mul(settings.forceFactor * dt));
+                    p.velocity.add(deltaV.mul(settings.forceFactor * dt));
                 }
             }
         }
@@ -536,9 +536,9 @@ public class Physics {
         Particle p = particles[i];
 
         // x += v * dt
-        p.v.mulAdd(dt, p.x, p.x);
+        p.velocity.mulAdd(dt, p.position, p.position);
 
-        ensurePosition(p.x);
+        ensurePosition(p.position);
     }
 
     public Vector3d connection(Vector3d x1, Vector3d x2) {
