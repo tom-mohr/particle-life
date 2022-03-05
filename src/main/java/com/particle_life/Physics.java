@@ -517,14 +517,14 @@ public class Physics {
 
                 Particle q = particles[j];
 
-                Vector3d relativeX = connection(p.position, q.position);
+                Vector3d relativePosition = connection(p.position, q.position);
 
-                double distanceSquared = relativeX.lengthSquared();
+                double distanceSquared = relativePosition.lengthSquared();
                 // only check particles that are closer than rmax
                 if (distanceSquared != 0 && distanceSquared < settings.rmax * settings.rmax) {
 
-                    relativeX.div(settings.rmax);
-                    Vector3d deltaV = accelerator.accelerate(settings.matrix.get(p.type, q.type), relativeX);
+                    relativePosition.div(settings.rmax);
+                    Vector3d deltaV = accelerator.accelerate(settings.matrix.get(p.type, q.type), relativePosition);
                     // apply force as acceleration
                     p.velocity.add(deltaV.mul(settings.forceFactor * dt));
                 }
