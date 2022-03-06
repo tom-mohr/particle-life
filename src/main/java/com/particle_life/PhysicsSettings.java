@@ -26,7 +26,7 @@ public class PhysicsSettings {
      * Time that is assumed to have passed between each simulation step, in seconds.
      */
     public double dt = 0.02f;
-    public Matrix matrix = new DefaultMatrix(3);
+    public Matrix matrix = new DefaultMatrix(6);
 
     public PhysicsSettings() {
     }
