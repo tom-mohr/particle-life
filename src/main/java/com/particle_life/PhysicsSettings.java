@@ -2,11 +2,30 @@ package com.particle_life;
 
 public class PhysicsSettings {
 
+    /**
+     * Allows particles to move and interact across the world's borders (-1.0, +1.0).
+     */
     public boolean wrap = true;
-    public double rmax = 0.04;          // no interaction between particles that are further apart than rmax
-    public double friction = 0.0000001f;      // velocity will be multiplied with this factor every second
-    public double forceFactor = 0.5f;   // force is scaled by arbitrary factor
-    public double dt = 0.02f;   // Time that is assumed to have passed between each simulation step, in seconds.
+
+    /**
+     * no interaction between particles that are further apart than rmax
+     */
+    public double rmax = 0.04;
+
+    /**
+     * velocity will be multiplied with this factor every second
+     */
+    public double friction = 0.0000001f;
+
+    /**
+     * force is scaled by arbitrary factor
+     */
+    public double forceFactor = 0.5f;
+
+    /**
+     * Time that is assumed to have passed between each simulation step, in seconds.
+     */
+    public double dt = 0.02f;
     public Matrix matrix = new DefaultMatrix(3);
 
     public PhysicsSettings() {
