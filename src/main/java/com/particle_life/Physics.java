@@ -1,6 +1,5 @@
 package com.particle_life;
 
-import com.particle_life.multithreading.ThreadUtility;
 import org.joml.Vector3d;
 
 import java.util.Arrays;

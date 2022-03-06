@@ -1,15 +1,24 @@
-package com.particle_life.multithreading;
+package com.particle_life;
 
 import java.util.LinkedList;
 
 public class ThreadUtility {
 
-    private record BatchProcessor(int start, int stop, ParticleProcessor particleProcessor) implements Runnable {
+    public interface IndexProcessor {
+        /**
+         *
+         * @param i the index that is to be processed
+         * @return whether the execution should continue.
+         */
+        boolean process(int i);
+    }
+
+    private record BatchProcessor(int start, int stop, IndexProcessor indexProcessor) implements Runnable {
 
         @Override
         public void run() {
             for (int i = start; i < stop; i++) {
-                if (!particleProcessor.process(i)) {
+                if (!indexProcessor.process(i)) {
                     break;
                 }
             }
@@ -18,12 +27,12 @@ public class ThreadUtility {
 
     /**
      *
-     * @param loadSize
-     * @param preferredNumberOfThreads
-     * @param particleProcessor
+     * @param loadSize                 the number of indices that must be processed
+     * @param preferredNumberOfThreads on how many threads the load should be distributed
+     * @param indexProcessor           callback that will be invoked on each index in 0 ... loadSize - 1
      * @return actual number of threads used
      */
-    public static int distributeLoadEvenly(int loadSize, int preferredNumberOfThreads, ParticleProcessor particleProcessor) {
+    public static int distributeLoadEvenly(int loadSize, int preferredNumberOfThreads, IndexProcessor indexProcessor) {
 
         if (loadSize <= 0) return 0;
 
@@ -33,7 +42,7 @@ public class ThreadUtility {
         int start = 0;
         int stop = start + length;
         while (stop <= loadSize) {
-            Thread thread = new Thread(new BatchProcessor(start, stop, particleProcessor));
+            Thread thread = new Thread(new BatchProcessor(start, stop, indexProcessor));
             threads.add(thread);
             thread.start();
             // move interval by length
@@ -41,7 +50,7 @@ public class ThreadUtility {
             stop += length;
         }
         if (start < loadSize) {
-            Thread thread = new Thread(new BatchProcessor(start, loadSize, particleProcessor));
+            Thread thread = new Thread(new BatchProcessor(start, loadSize, indexProcessor));
             threads.add(thread);
             thread.start();
         }
