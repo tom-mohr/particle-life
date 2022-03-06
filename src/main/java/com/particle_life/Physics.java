@@ -119,12 +119,12 @@ public class Physics {
 
         ThreadUtility.distributeLoadEvenly(particles.length, preferredNumberOfThreads, i -> {
             if (!updateThreadsShouldRun.get()) return false;
-            updateV(i, settings.dt);
+            updateVelocity(i, settings.dt);
             return true;
         });
         ThreadUtility.distributeLoadEvenly(particles.length, preferredNumberOfThreads, i -> {
             if (!updateThreadsShouldRun.get()) return false;
-            updateX(i, settings.dt);
+            updatePosition(i, settings.dt);
             return true;
         });
 
@@ -330,14 +330,14 @@ public class Physics {
     }
 
     /**
-     * Will fail if x is outside range!
+     * Will fail if position is outside range!
      *
-     * @param x must be in position range
-     * @return index of the container containing <code>x</code>
+     * @param position must be in position range
+     * @return index of the container containing <code>position</code>
      */
-    private int getContainerIndex(Vector3d x) {
-        int cx = (int) ((x.x + 1) / containerSize);
-        int cy = (int) ((x.y + 1) / containerSize);
+    private int getContainerIndex(Vector3d position) {
+        int cx = (int) ((position.x + 1) / containerSize);
+        int cy = (int) ((position.y + 1) / containerSize);
 
         // for solid borders
         if (cx == nx) {
@@ -370,7 +370,7 @@ public class Physics {
         }
     }
 
-    private void updateV(int i, double dt) {
+    private void updateVelocity(int i, double dt) {
         Particle p = particles[i];
 
         // apply friction before adding new velocity
@@ -415,18 +415,18 @@ public class Physics {
         }
     }
 
-    private void updateX(int i, double dt) {
+    private void updatePosition(int i, double dt) {
         Particle p = particles[i];
 
-        // x += v * dt
+        // pos += vel * dt
         p.velocity.mulAdd(dt, p.position, p.position);
 
         ensurePosition(p.position);
     }
 
-    public Vector3d connection(Vector3d x1, Vector3d x2) {
+    public Vector3d connection(Vector3d pos1, Vector3d pos2) {
 
-        Vector3d delta = new Vector3d(x2).sub(x1);
+        Vector3d delta = new Vector3d(pos2).sub(pos1);
 
         if (settings.wrap) {
             // wrapping the connection gives us the shortest possible distance
@@ -436,20 +436,40 @@ public class Physics {
         return delta;
     }
 
-    public double distance(Vector3d x1, Vector3d x2) {
-        return connection(x1, x2).length();
+    /**
+     * Calculates the distance between two positions.
+     * If <code>settings.wrap == true</code>, this will
+     * return the shortest possible distance, even if
+     * that connection goes across the world's borders.
+     * @return shortest possible distance between two points
+     */
+    public double distance(Vector3d pos1, Vector3d pos2) {
+        return connection(pos1, pos2).length();
     }
 
     /**
-     * Ensures that the coordinates of <code>x</code> are in [-1, 1].
-     * If <code>settings.wrap</code> is <code>true</code>, <code>wrap</code> is used, otherwise <code>clamp</code>.
-     * @param x
+     * Changes the coordinates of the given vector to ensures that they are in the correct range.
+     * <ul>
+     *     <li>
+     *         If <code>settings.wrap == false</code>,
+     *         the coordinates are simply clamped to [-1.0, 1.0].
+     *     </li>
+     *     <li>
+     *         If <code>settings.wrap == true</code>,
+     *         the coordinates are made to be inside [-1.0, 1.0) by adding or subtracting multiples of 2.
+     *     </li>
+     * </ul>
+     * This method is called by {@link #update()} after changing the particles' positions.
+     * It is just exposed for convenience.
+     * That is, if you change the coordinates of the particles yourself,
+     * you can use this to make sure that the coordinates are in the correct range before {@link #update()} is called.
+     * @param position
      */
-    public void ensurePosition(Vector3d x) {
+    public void ensurePosition(Vector3d position) {
         if (settings.wrap) {
-            Range.wrap(x);
+            Range.wrap(position);
         } else {
-            Range.clamp(x);
+            Range.clamp(position);
         }
     }
 
