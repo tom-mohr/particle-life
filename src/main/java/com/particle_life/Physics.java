@@ -5,9 +5,7 @@ import org.joml.Vector3d;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class Physics {
 
@@ -34,19 +32,11 @@ public class Physics {
 
     public int preferredNumberOfThreads = 12;
 
-    public boolean pause = false;
-    private final Clock clock = new Clock(60);
-
-    private Thread updateThread = null;
-    private AtomicBoolean threadShouldRun = new AtomicBoolean(false);
-
     /**
-     * This is used to kill the thread.
+     * This is used to stop the updating mid-particle.
      */
-    private AtomicBoolean threadShouldAbort = new AtomicBoolean(false);
+    private final AtomicBoolean updateThreadsShouldRun = new AtomicBoolean(false);
 
-    private final LinkedBlockingDeque<Runnable> commandQueue = new LinkedBlockingDeque<>();
-    private final AtomicReference<Runnable> once = new AtomicReference<>(null);
 
     // INITIALIZATION:
 
@@ -113,156 +103,50 @@ public class Physics {
         // bottom right corner
     }
 
-    // COMMAND QUEUE
-
     /**
-     * The passed command will be executed in the update thread.
-     * Use this if you want to change anything from another thread.
-     * The commands will be executed sequentially after / before the data is modified
-     * so there won't be any race conditions.
-     * <p> The order in which commands are added via this method is preserved.
-     *
-     * @param cmd the command to be executed in the update thread
+     * Calculate the next step in the simulation.
+     * That is, it changes the velocity and position of each particle
+     * in the particle array according to <code>this.settings</code>.
      */
-    public void enqueue(Runnable cmd) {
-        //todo: debug print if some GUI elements spam commands
-        commandQueue.addLast(cmd);
+    public void update() {
+        updateParticles();
     }
 
-    /**
-     * The passed command will be executed in the update thread.
-     * If this method is called again and the previous command could not yet be executed
-     * the previous command will be dropped and only the most recent one (passed to this method) will be executed.
-     *
-     * @param cmd the command to be executed in the update thread
-     */
-    public void doOnce(Runnable cmd) {
-        once.set(cmd);
-    }
+    private void updateParticles() {
 
-    private void processCommandQueue() {
-        while (!commandQueue.isEmpty()) {
-            Runnable cmd = commandQueue.removeFirst();
-            cmd.run();
-        }
-    }
-
-    // LIFECYCLE METHODS:
-
-    public synchronized void startLoop() {
-
-        if (updateThread != null) throw new IllegalStateException("Update thread didn't finish properly (wasn't null).");
-
-        threadShouldRun.set(true);
-
-        updateThread = new Thread(() -> {
-            while (threadShouldRun.get()) {
-
-                clock.tick();
-
-                double dt = settings.fallbackDt;
-                if (settings.autoDt) {
-                    dt = clock.getDtMillis() / 1000.0;
-                    if (settings.maxDt >= 0) {
-                        dt = Math.min(settings.maxDt, dt);
-                    }
-                }
-                update(dt);
-            }
-        });
-        updateThread.start();
-    }
-
-    /**
-     * Blocks until update loop is stopped or timeout.
-     * @return if the thread could be stopped.
-     */
-    public synchronized boolean stopLoop() {
-
-        assert updateThread != null : "Thread is null";
-        if (!updateThread.isAlive()) {
-            throw new IllegalStateException("Thread is not running.");
-        }
-
-        threadShouldRun.set(false);
-        try {
-            updateThread.join(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        if (updateThread.isAlive()) {
-            System.err.println("Physics update thread didn't react. Will try to abort...");
-
-            threadShouldAbort.set(true);
-            try {
-                updateThread.join(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            threadShouldAbort.set(false);
-
-            if (updateThread.isAlive()) {
-                System.err.println("Physics update thread couldn't be aborted.");
-                return false;
-            } else {
-                System.out.println("Physics update thread was successfully aborted.");
-                updateThread = null;
-                return true;
-            }
-
-        } else {
-            updateThread = null;
-            return true;
-        }
-    }
-
-    /**
-     * Calculates the next step in the simulation.
-     * <p>You can either call this method yourself, if you want to update the physics synchronously,
-     * or use {@link #startLoop()} and {@link #stopLoop()} in order to update asynchronously.
-     * If you use asynchronous updating, use {@link #enqueue(Runnable)} to change settings etc.
-     * instead of doing so directly (this could lead to race conditions).<br>
-     * Example:
-     * <pre>
-     *     Physics p = new Physics();
-     *     p.startLoop();
-     *     while (true) {
-     *         if (button.pressed()) {
-     *             p.enqueue(() -> p.settings.wrap = false);
-     *         }
-     *     }
-     *     p.stopLoop();
-     * </pre>
-     *
-     * @param dt time passed since last call in seconds
-     */
-    public void update(double dt) {
-
-        processCommandQueue();
-
-        Runnable onceCommand = once.getAndSet(null);
-        if (onceCommand != null) onceCommand.run();
-
-        if (!pause) {
-            updateParticles(dt);
-        }
-    }
-
-    private void updateParticles(double dt) {
+        updateThreadsShouldRun.set(true);
 
         makeContainers();
 
         ThreadUtility.distributeLoadEvenly(particles.length, preferredNumberOfThreads, i -> {
-            if (threadShouldAbort.get()) return false;
-            updateV(i, dt);
+            if (!updateThreadsShouldRun.get()) return false;
+            updateV(i, settings.dt);
             return true;
         });
         ThreadUtility.distributeLoadEvenly(particles.length, preferredNumberOfThreads, i -> {
-            if (threadShouldAbort.get()) return false;
-            updateX(i, dt);
+            if (!updateThreadsShouldRun.get()) return false;
+            updateX(i, settings.dt);
             return true;
         });
+
+        updateThreadsShouldRun.set(false);
+    }
+
+    /**
+     * Can be used to forcibly stop execution of {@link #update()} mid-particle
+     * from another thread.
+     * This is safe to use.<br>
+     * This method does not block until the execution is stopped, it just tells the
+     * corresponding threads to stop as soon as possible.
+     * That is, the {@link #update()} method may still run after this method has
+     * been called, but it will stop after each thread has finished processing its
+     * current particle.<br>
+     * Note that the next call to {@link #update()} will as always start from
+     * the beginning of the array, so some particles will have been simulated for one
+     * more step than others. But you probably don't have to care about this.
+     */
+    public void forceUpdateStop() {
+        updateThreadsShouldRun.set(false);
     }
 
     // PUBLIC CONTROL METHODS:
@@ -574,26 +458,5 @@ public class Physics {
 
     public void setTypes() {
         Arrays.stream(particles).forEach(p -> setType(p));
-    }
-
-    // GETTERS AND SETTERS:
-
-    /**
-     * Returns how much time passed between the last two calls to {@link #update(double) update()}.
-     * This will also work if {@link #update(double) update()} is being called automatically (see {@link #startLoop()}),
-     * but keep in mind that the return value of this method can be very high if <code>{@link #pause} == true</code>.
-     * @return how much time passed between the last two calls to {@link #update(double) update()}
-     */
-    public double getActualDt() {
-        return clock.getDtMillis() / 1000.0;
-    }
-
-    /**
-     * Average framerate over the last couple of frames.
-     * See javadoc of {@link #getActualDt()}.
-     * @return
-     */
-    public double getAvgFramerate() {
-        return clock.getAvgFramerate();
     }
 }
