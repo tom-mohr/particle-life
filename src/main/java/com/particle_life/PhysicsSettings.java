@@ -18,9 +18,9 @@ public class PhysicsSettings {
     public double friction = 0.0000001f;
 
     /**
-     * force is scaled by arbitrary factor
+     * Scaled force by an arbitrary factor.
      */
-    public double forceFactor = 0.5f;
+    public double force = 1.0f;
 
     /**
      * Time that is assumed to have passed between each simulation step, in seconds.
@@ -37,7 +37,7 @@ public class PhysicsSettings {
         p.wrap = wrap;
         p.rmax = rmax;
         p.friction = friction;
-        p.forceFactor = forceFactor;
+        p.force = force;
         p.dt = dt;
         p.matrix = matrix.deepCopy();
 
@@ -51,7 +51,7 @@ public class PhysicsSettings {
             if (s.wrap != wrap) return false;
             if (s.rmax != rmax) return false;
             if (s.friction != friction) return false;
-            if (s.forceFactor != forceFactor) return false;
+            if (s.force != force) return false;
             if (s.dt != dt) return false;
             if (!s.matrix.equals(matrix)) return false;
 

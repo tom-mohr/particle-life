@@ -409,7 +409,7 @@ public class Physics {
                     relativePosition.div(settings.rmax);
                     Vector3d deltaV = accelerator.accelerate(settings.matrix.get(p.type, q.type), relativePosition);
                     // apply force as acceleration
-                    p.velocity.add(deltaV.mul(settings.rmax * settings.forceFactor * dt));
+                    p.velocity.add(deltaV.mul(settings.rmax * settings.force * dt));
                 }
             }
         }
