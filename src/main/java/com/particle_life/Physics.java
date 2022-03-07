@@ -403,8 +403,8 @@ public class Physics {
                 Vector3d relativePosition = connection(p.position, q.position);
 
                 double distanceSquared = relativePosition.lengthSquared();
-                // only check particles that are closer than rmax
-                if (distanceSquared != 0 && distanceSquared < settings.rmax * settings.rmax) {
+                // only check particles that are closer than or at rmax
+                if (distanceSquared != 0 && distanceSquared <= settings.rmax * settings.rmax) {
 
                     relativePosition.div(settings.rmax);
                     Vector3d deltaV = accelerator.accelerate(settings.matrix.get(p.type, q.type), relativePosition);
