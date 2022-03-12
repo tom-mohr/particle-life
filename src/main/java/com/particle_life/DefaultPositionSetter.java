@@ -9,7 +9,7 @@ public class DefaultPositionSetter implements PositionSetter {
         position.set(
                 Math.random() * 2 - 1,
                 Math.random() * 2 - 1,
-                0
+                Math.random() * 2 - 1
         );
     }
 }
