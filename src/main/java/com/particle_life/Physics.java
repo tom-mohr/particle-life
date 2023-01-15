@@ -30,6 +30,7 @@ public class Physics {
     public TypeSetter typeSetter;
 
     public int preferredNumberOfThreads = 12;
+    private final LoadDistributor loadDistributor = new LoadDistributor();
 
     /**
      * This is used to stop the updating mid-particle.
@@ -117,12 +118,12 @@ public class Physics {
 
         makeContainers();
 
-        ThreadUtility.distributeLoadEvenly(particles.length, preferredNumberOfThreads, i -> {
+        loadDistributor.distributeLoadEvenly(particles.length, preferredNumberOfThreads, i -> {
             if (!updateThreadsShouldRun.get()) return false;
             updateVelocity(i, settings.dt);
             return true;
         });
-        ThreadUtility.distributeLoadEvenly(particles.length, preferredNumberOfThreads, i -> {
+        loadDistributor.distributeLoadEvenly(particles.length, preferredNumberOfThreads, i -> {
             if (!updateThreadsShouldRun.get()) return false;
             updatePosition(i, settings.dt);
             return true;
@@ -146,6 +147,17 @@ public class Physics {
      */
     public void forceUpdateStop() {
         updateThreadsShouldRun.set(false);
+    }
+
+    /**
+     * Shutdown the internal thread pool.
+     * Blocks until all tasks have completed execution.
+     *
+     * @param timeoutMilliseconds how long to wait for update threads to finish their execution (in milliseconds)
+     * @return {@code true} if all tasks terminated and {@code false} if the timeout elapsed before termination
+     */
+    public boolean shutdown(long timeoutMilliseconds) throws InterruptedException {
+        return loadDistributor.shutdown(timeoutMilliseconds);
     }
 
     // PUBLIC CONTROL METHODS:

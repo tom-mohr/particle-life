@@ -3,9 +3,9 @@ package com.particle_life;
 import java.util.LinkedList;
 import java.util.concurrent.*;
 
-public class ThreadUtility {
+public class LoadDistributor {
 
-    private static final ExecutorService threadPool = Executors.newCachedThreadPool();
+    private final ExecutorService threadPool = Executors.newCachedThreadPool();
 
     public interface IndexProcessor {
         /**
@@ -34,7 +34,7 @@ public class ThreadUtility {
      * @param preferredNumberOfThreads on how many threads the load should be distributed
      * @param indexProcessor           callback that will be invoked on each index in 0 ... loadSize - 1
      */
-    public static void distributeLoadEvenly(int loadSize, int preferredNumberOfThreads, IndexProcessor indexProcessor) {
+    public void distributeLoadEvenly(int loadSize, int preferredNumberOfThreads, IndexProcessor indexProcessor) {
 
         if (loadSize <= 0) return;
 
@@ -63,5 +63,17 @@ public class ThreadUtility {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    /**
+     * Shutdown the internal thread pool.
+     * Blocks until all tasks have completed execution.
+     *
+     * @param timeoutMilliseconds how long to wait for update threads to finish their execution (in milliseconds)
+     * @return {@code true} if all tasks terminated and {@code false} if the timeout elapsed before termination
+     */
+    public boolean shutdown(long timeoutMilliseconds) throws InterruptedException {
+        threadPool.shutdown();
+        return threadPool.awaitTermination(timeoutMilliseconds, TimeUnit.MILLISECONDS);
     }
 }
