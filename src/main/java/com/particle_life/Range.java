@@ -6,24 +6,24 @@ import org.joml.Vector3d;
  * Provides functions for assuring that the coordinates of particles are in [-1, 1].
  * <p>Two approaches are possible:
  * <ol>
- *     <li>{@link #clamp(Vector3d) Range.clamp(p)}<p>
+ *     <li>{@link #clamp(Vector3d) Range.clamp(x)}<p>
  *         Leaves coordinates inside [-1, 1] untouched.
  *         All other coordinates are clamped between -1 and 1.
  *         <p>Example:
  *         <pre>
- *             p = new Vector3d(0.4, -1.3, 2.0);
- *             Range.clamp(p);
- *             // p is now (0.4, -1.0, 1.0).
+ *             x = new Vector3d(0.4, -1.3, 2.0);
+ *             Range.clamp(x);
+ *             // x is now (0.4, -1.0, 1.0).
  *         </pre>
  *     </li>
- *     <li>{@link #wrap(Vector3d) Range.wrap(p)}<p>
+ *     <li>{@link #wrap(Vector3d) Range.wrap(x)}<p>
  *         Leaves coordinates inside [-1, 1) untouched.
  *         All other coordinates are modified by repeatedly adding or subtracting 2 until they are in [-1, 1).
  *         <p>Example:
  *         <pre>
- *             p = new Vector3d(0.4, -1.3, 2.0);
- *             Range.wrap(p);
- *             // p is now (0.4, 0.7, 0.0).
+ *             x = new Vector3d(0.4, -1.3, 2.0);
+ *             Range.wrap(x);
+ *             // x is now (0.4, 0.7, 0.0).
  *         </pre>
  *         When using this approach, the shortest path from point <code>a</code> to point <code>b</code>
  *         can be determined using <code>wrap(b - a)</code>.
@@ -32,16 +32,16 @@ import org.joml.Vector3d;
  */
 class Range {
 
-    public static void wrap(Vector3d pos) {
-        pos.x = wrap(pos.x);
-        pos.y = wrap(pos.y);
-        pos.z = wrap(pos.z);
+    public static void wrap(Vector3d x) {
+        x.x = wrap(x.x);
+        x.y = wrap(x.y);
+        x.z = 0;  //todo 3D
     }
 
-    public static void clamp(Vector3d pos) {
-        pos.x = clamp(pos.x);
-        pos.y = clamp(pos.y);
-        pos.z = clamp(pos.z);
+    public static void clamp(Vector3d x) {
+        x.x = clamp(x.x);
+        x.y = clamp(x.y);
+        x.z = 0;  // todo 3D
     }
 
     private static double wrap(double value) {
