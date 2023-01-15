@@ -1,8 +1,11 @@
 package com.particle_life;
 
 import java.util.LinkedList;
+import java.util.concurrent.*;
 
 public class ThreadUtility {
+
+    private static final ExecutorService threadPool = Executors.newCachedThreadPool();
 
     public interface IndexProcessor {
         /**
@@ -30,42 +33,35 @@ public class ThreadUtility {
      * @param loadSize                 the number of indices that must be processed
      * @param preferredNumberOfThreads on how many threads the load should be distributed
      * @param indexProcessor           callback that will be invoked on each index in 0 ... loadSize - 1
-     * @return actual number of threads used
      */
-    public static int distributeLoadEvenly(int loadSize, int preferredNumberOfThreads, IndexProcessor indexProcessor) {
+    public static void distributeLoadEvenly(int loadSize, int preferredNumberOfThreads, IndexProcessor indexProcessor) {
 
-        if (loadSize <= 0) return 0;
+        if (loadSize <= 0) return;
 
-        LinkedList<Thread> threads = new LinkedList<>();
+        LinkedList<Future<?>> futures = new LinkedList<>();  // needed later for waiting for all threads to finish
         int length = (int) Math.ceil(loadSize / (double) preferredNumberOfThreads);
 
         int start = 0;
         int stop = start + length;
         while (stop <= loadSize) {
-            Thread thread = new Thread(new BatchProcessor(start, stop, indexProcessor));
-            threads.add(thread);
-            thread.start();
+            Future<?> future = threadPool.submit(new BatchProcessor(start, stop, indexProcessor));
+            futures.add(future);
             // move interval by length
             start += length;
             stop += length;
         }
         if (start < loadSize) {
-            Thread thread = new Thread(new BatchProcessor(start, loadSize, indexProcessor));
-            threads.add(thread);
-            thread.start();
+            Future<?> future = threadPool.submit(new BatchProcessor(start, loadSize, indexProcessor));
+            futures.add(future);
         }
 
-        int actualNumberOfThreads = threads.size();
-
-        while (!threads.isEmpty()) {
-            Thread thread = threads.removeFirst();
+        // wait for all threads to finish
+        for (Future<?> future : futures) {
             try {
-                thread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                future.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
             }
         }
-
-        return actualNumberOfThreads;
     }
 }
