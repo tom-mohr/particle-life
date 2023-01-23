@@ -120,12 +120,12 @@ public class Physics {
 
         loadDistributor.distributeLoadEvenly(particles.length, preferredNumberOfThreads, i -> {
             if (!updateThreadsShouldRun.get()) return false;
-            updateVelocity(i, settings.dt);
+            updateVelocity(i);
             return true;
         });
         loadDistributor.distributeLoadEvenly(particles.length, preferredNumberOfThreads, i -> {
             if (!updateThreadsShouldRun.get()) return false;
-            updatePosition(i, settings.dt);
+            updatePosition(i);
             return true;
         });
 
@@ -382,11 +382,11 @@ public class Physics {
         }
     }
 
-    private void updateVelocity(int i, double dt) {
+    private void updateVelocity(int i) {
         Particle p = particles[i];
 
         // apply friction before adding new velocity
-        p.velocity.mul(Math.pow(settings.friction, dt));
+        p.velocity.mul(Math.pow(settings.friction, settings.dt));
 
         int cx0 = (int) Math.floor((p.position.x + 1) / containerSize);
         int cy0 = (int) Math.floor((p.position.y + 1) / containerSize);
@@ -421,17 +421,17 @@ public class Physics {
                     relativePosition.div(settings.rmax);
                     Vector3d deltaV = accelerator.accelerate(settings.matrix.get(p.type, q.type), relativePosition);
                     // apply force as acceleration
-                    p.velocity.add(deltaV.mul(settings.rmax * settings.force * dt));
+                    p.velocity.add(deltaV.mul(settings.rmax * settings.force * settings.dt));
                 }
             }
         }
     }
 
-    private void updatePosition(int i, double dt) {
+    private void updatePosition(int i) {
         Particle p = particles[i];
 
         // pos += vel * dt
-        p.velocity.mulAdd(dt, p.position, p.position);
+        p.velocity.mulAdd(settings.dt, p.position, p.position);
 
         ensurePosition(p.position);
     }
