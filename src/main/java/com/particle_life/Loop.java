@@ -32,7 +32,7 @@ public class Loop {
      * <p>If this is negative (e.g. -1.0), there will be no limit.
      * <p>This won't have any effect on the actual framerate returned by {@link #getActualDt()}.
      */
-    public double maxDt = 1.0 / 20.0; // max. 20 fps
+    public double maxDt = 1.0 / 20.0; // min. 20 fps
 
     /**
      * If this is <code>true</code>, the callback won't be called in the loop.
@@ -147,11 +147,7 @@ public class Loop {
 
     private double computeDt() {
         double dt = clock.getDtMillis() / 1000.0;
-        if (maxDt >= 0) {
-            return Math.min(maxDt, dt);
-        } else {
-            return dt;
-        }
+        return Math.min(maxDt, dt);
     }
 
     /**
