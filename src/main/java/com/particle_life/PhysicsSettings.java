@@ -13,9 +13,14 @@ public class PhysicsSettings {
     public double rmax = 0.04;
 
     /**
-     * velocity will be multiplied with this factor every second
+     * The time in seconds after which half the velocity of a particle
+     * should be lost due to friction.
+     * The actual friction factor <code>f</code> that the velocity is
+     * multiplied with in every time step is calculated on the basis of
+     * this value according to the following formula:
+     * <code>f = Math.pow(0.5, dt / frictionHalfLife)</code>
      */
-    public double friction = 0.0000001f;
+    public double velocityHalfLife = 0.043;
 
     /**
      * Scaled force by an arbitrary factor.
@@ -36,7 +41,7 @@ public class PhysicsSettings {
 
         p.wrap = wrap;
         p.rmax = rmax;
-        p.friction = friction;
+        p.velocityHalfLife = velocityHalfLife;
         p.force = force;
         p.dt = dt;
         p.matrix = matrix.deepCopy();
@@ -50,7 +55,7 @@ public class PhysicsSettings {
 
             if (s.wrap != wrap) return false;
             if (s.rmax != rmax) return false;
-            if (s.friction != friction) return false;
+            if (s.velocityHalfLife != velocityHalfLife) return false;
             if (s.force != force) return false;
             if (s.dt != dt) return false;
             if (!s.matrix.equals(matrix)) return false;
