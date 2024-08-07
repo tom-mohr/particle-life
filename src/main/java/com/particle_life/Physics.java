@@ -27,6 +27,11 @@ public class Physics {
     public Accelerator accelerator;
     public MatrixGenerator matrixGenerator;
     public PositionSetter positionSetter;
+    /**
+     * This is the TypeSetter that is used by default whenever
+     * an individual particle needs to be assigned a new type.
+     * @see TypeSetter#getType
+     */
     public TypeSetter typeSetter;
 
     public int preferredNumberOfThreads = 12;
@@ -226,11 +231,17 @@ public class Physics {
     }
 
     /**
-     * The matrix size should only be changed via this method.
-     * <p>If <code>newSize</code> is smaller than the current size,
-     * all particles with type <code>>= newSize</code> will have
-     * their type changed to a type <code>< newSize</code> using
-     * the current type setter ({@link #typeSetter Physics.typeSetter}).
+     * This is a convenience method for quickly changing the matrix size
+     * and getting the expected results.<br>
+     * This method takes care of:
+     * <ul>
+     *     <li>re-using values from the old matrix</li>
+     *     <li>generating new matrix values using the {@link #matrixGenerator}</li>
+     *     <li>changing the types of particles that are not within the the new matrix size
+     *         using the current {@link #typeSetter type setter}.</li>
+     * </ul>
+     *
+     * @see #ensureTypes()
      */
     public void setMatrixSize(int newSize) {
         Matrix prevMatrix = settings.matrix;
@@ -250,11 +261,20 @@ public class Physics {
         }
 
         if (newSize < prevSize) {
-            // need to change types of particles that are not in the new matrix
-            for (Particle p : particles) {
-                if (p.type >= newSize) {
-                    setType(p);
-                }
+            ensureTypes(); // need to change types of particles that are not in the new matrix
+        }
+    }
+
+    /**
+     * Ensures that all particles have a type that is within the matrix size.
+     * You should call this method after {@code settings.matrix} was set to a matrix of different size.<br>
+     * All particles that have a type that is not within the matrix size
+     * are assigned a new type using the current {@link #typeSetter type setter}.
+     */
+    public void ensureTypes() {
+        for (Particle p : particles) {
+            if (p.type >= settings.matrix.size()) {
+                setType(p);
             }
         }
     }

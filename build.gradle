@@ -4,8 +4,10 @@ plugins {
     id 'maven-publish'
 }
 
-group 'com.particle.life'
-version '1.0.0'
+// to match JitPack format 'com.github.User:Repo:Tag'
+// when using local installs
+group 'com.github.tom-mohr'
+version 'v0.3.0'
 
 repositories {
     mavenCentral()
