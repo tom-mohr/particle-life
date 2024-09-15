@@ -402,18 +402,12 @@ public class Physics {
         }
     }
 
-    private double computeFrictionFactor(double halfLife, double dt) {
-        if (halfLife == 0) return 0.0;  // avoid division by zero
-        if (halfLife == Double.POSITIVE_INFINITY) return 1.0;
-
-        return Math.pow(0.5, dt / halfLife);
-    }
-
     private void updateVelocity(int i) {
         Particle p = particles[i];
 
         // apply friction before adding new velocity
-        p.velocity.mul(computeFrictionFactor(settings.velocityHalfLife, settings.dt));
+        double frictionFactor = Math.pow(settings.friction, 60 * settings.dt);  // is normalized to 60 fps
+        p.velocity.mul(frictionFactor);
 
         int cx0 = (int) Math.floor((p.position.x + 1) / containerSize);
         int cy0 = (int) Math.floor((p.position.y + 1) / containerSize);

@@ -13,14 +13,18 @@ public class PhysicsSettings {
     public double rmax = 0.04;
 
     /**
-     * The time in seconds after which half the velocity of a particle
-     * should be lost due to friction.
-     * The actual friction factor <code>f</code> that the velocity is
-     * multiplied with in every time step is calculated on the basis of
-     * this value according to the following formula:
-     * <code>f = Math.pow(0.5, dt / frictionHalfLife)</code>
+     * Friction coefficient.
+     * All particles' velocities are multiplied with this value in each update step to simulate friction.
+     * A value of 1.0 means no friction.
+     * A value of 0.0 means that the particle will come to a stop immediately.
+     * <p>
+     *     The given friction coefficient is based on 60 fps.
+     *     To account for this normalization, the actual friction factor is calculated
+     *     during each update step according to the following formula:
+     *     <code>actualFriction = pow(friction, 60 / fps)</code>
+     * </p>
      */
-    public double velocityHalfLife = 0.043;
+    public double friction = 0.85;
 
     /**
      * Scaled force by an arbitrary factor.
@@ -41,7 +45,7 @@ public class PhysicsSettings {
 
         p.wrap = wrap;
         p.rmax = rmax;
-        p.velocityHalfLife = velocityHalfLife;
+        p.friction = friction;
         p.force = force;
         p.dt = dt;
         p.matrix = matrix.deepCopy();
@@ -55,7 +59,7 @@ public class PhysicsSettings {
 
             if (s.wrap != wrap) return false;
             if (s.rmax != rmax) return false;
-            if (s.velocityHalfLife != velocityHalfLife) return false;
+            if (s.friction != friction) return false;
             if (s.force != force) return false;
             if (s.dt != dt) return false;
             if (!s.matrix.equals(matrix)) return false;
