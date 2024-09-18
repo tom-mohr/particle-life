@@ -7,7 +7,7 @@ plugins {
 // to match JitPack format 'com.github.User:Repo:Tag'
 // when using local installs
 group 'com.github.tom-mohr'
-version 'v0.4.0'
+version 'v0.5.0'
 
 repositories {
     mavenCentral()

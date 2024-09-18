@@ -22,7 +22,7 @@ public class Physics {
     // container layout:
     private int nx;
     private int ny;
-    private double containerSize = 0.13;//todo: implement makeContainerNeighborhood() to make this independent of rmax
+    private double containerSize = 0.065;//todo: implement makeContainerNeighborhood() to make this independent of rmax
 
     public Accelerator accelerator;
     public MatrixGenerator matrixGenerator;
@@ -80,12 +80,8 @@ public class Physics {
     }
 
     private void calcNxNy() {
-//        nx = (int) Math.ceil(2 * range.range.x / containerSize);
-//        ny = (int) Math.ceil(2 * range.range.y / containerSize);
-
-        // currently, "floor" is needed (because containerSize = rmax), so that rmax lies inside "simple" neighborhood
-        nx = (int) Math.floor(2 / containerSize);
-        ny = (int) Math.floor(2 / containerSize);
+        nx = (int) Math.floor(1 / containerSize);
+        ny = (int) Math.floor(1 / containerSize);
     }
 
     private void makeContainerNeighborhood() {
@@ -304,7 +300,7 @@ public class Physics {
 
     protected final void setPosition(Particle p) {
         positionSetter.set(p.position, p.type, settings.matrix.size());
-        Range.wrap(p.position);
+        ensurePosition(p.position);
         p.velocity.x = 0;
         p.velocity.y = 0;
         p.velocity.z = 0;
@@ -368,8 +364,8 @@ public class Physics {
      * @return index of the container containing <code>position</code>
      */
     private int getContainerIndex(Vector3d position) {
-        int cx = (int) ((position.x + 1) / containerSize);
-        int cy = (int) ((position.y + 1) / containerSize);
+        int cx = (int) (position.x / containerSize);
+        int cy = (int) (position.y / containerSize);
 
         // for solid borders
         if (cx == nx) {
@@ -409,8 +405,8 @@ public class Physics {
         double frictionFactor = Math.pow(settings.friction, 60 * settings.dt);  // is normalized to 60 fps
         p.velocity.mul(frictionFactor);
 
-        int cx0 = (int) Math.floor((p.position.x + 1) / containerSize);
-        int cy0 = (int) Math.floor((p.position.y + 1) / containerSize);
+        int cx0 = (int) Math.floor(p.position.x / containerSize);
+        int cy0 = (int) Math.floor(p.position.y / containerSize);
 
         for (int[] containerNeighbor : containerNeighborhood) {
             int cx = wrapContainerX(cx0 + containerNeighbor[0]);
@@ -457,24 +453,30 @@ public class Physics {
         ensurePosition(p.position);
     }
 
+    /**
+     * Calculates the shortest connection between two positions.
+     * If <code>settings.wrap == true</code>, the connection might
+     * go across the world's borders.
+     * @param pos1 first position, with coordinates in the range [0, 1].
+     * @param pos2 second position, with coordinates in the range [0, 1].
+     * @return the shortest connection between the two positions
+     */
     public Vector3d connection(Vector3d pos1, Vector3d pos2) {
 
         Vector3d delta = new Vector3d(pos2).sub(pos1);
 
         if (settings.wrap) {
             // wrapping the connection gives us the shortest possible distance
-            Range.wrap(delta);
+            Range.wrapConnection(delta);
         }
 
         return delta;
     }
 
     /**
-     * Calculates the distance between two positions.
-     * If <code>settings.wrap == true</code>, this will
-     * return the shortest possible distance, even if
-     * that connection goes across the world's borders.
+     * Calculates the shortest distance between two positions.
      * @return shortest possible distance between two points
+     * @see #connection(Vector3d, Vector3d)
      */
     public double distance(Vector3d pos1, Vector3d pos2) {
         return connection(pos1, pos2).length();
@@ -485,11 +487,11 @@ public class Physics {
      * <ul>
      *     <li>
      *         If <code>settings.wrap == false</code>,
-     *         the coordinates are simply clamped to [-1.0, 1.0].
+     *         the coordinates are simply clamped to [0.0, 1.0].
      *     </li>
      *     <li>
      *         If <code>settings.wrap == true</code>,
-     *         the coordinates are made to be inside [-1.0, 1.0) by adding or subtracting multiples of 2.
+     *         the coordinates are made to be inside [0.0, 1.0) by adding or subtracting multiples of 1.
      *     </li>
      * </ul>
      * This method is called by {@link #update()} after changing the particles' positions.

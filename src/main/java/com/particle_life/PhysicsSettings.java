@@ -10,7 +10,7 @@ public class PhysicsSettings {
     /**
      * no interaction between particles that are further apart than rmax
      */
-    public double rmax = 0.04;
+    public double rmax = 0.02;
 
     /**
      * Friction coefficient.
