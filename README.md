@@ -8,4 +8,6 @@ Check out [this app](https://particle-life.com) to see this framework in action.
 
 ## Usage
 
+You need to have Java installed, with a version between 16 and (including) 23.
+
 See the [documentation](https://particle-life.com/java-framework/overview.html) for an explanation of how to add this as a dependency to your project and how to get the physics simulation up and running.
