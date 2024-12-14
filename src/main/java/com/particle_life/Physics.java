@@ -413,7 +413,7 @@ public class Physics {
             int cy = wrapContainerY(cy0 + containerNeighbor[1]);
             if (settings.wrap) {
                 cx = wrapContainerX(cx);
-                cy = wrapContainerX(cy);
+                cy = wrapContainerY(cy);
             } else {
                 if (cx < 0 || cx >= nx || cy < 0 || cy >= ny) {
                     continue;
