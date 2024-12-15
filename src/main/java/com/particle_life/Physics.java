@@ -12,6 +12,15 @@ public class Physics {
 
     public PhysicsSettings settings = new PhysicsSettings();
 
+    public IntegrationMethod integrationMethod = IntegrationMethod.EULER;
+
+    public enum IntegrationMethod {
+        EULER,
+        RK4v1,
+        RK4v2,
+        RK4v3
+    }
+
     public Particle[] particles;
 
     // buffers for sorting by containers:
@@ -405,8 +414,139 @@ public class Physics {
         double frictionFactor = Math.pow(settings.friction, 60 * settings.dt);  // is normalized to 60 fps
         p.velocity.mul(frictionFactor);
 
-        int cx0 = (int) Math.floor(p.position.x / containerSize);
-        int cy0 = (int) Math.floor(p.position.y / containerSize);
+        switch (integrationMethod) {
+            case EULER -> updateVelocityEuler(i);
+            case RK4v1 -> updateVelocityRK4(i);
+            case RK4v2 -> updateVelocityRK4v2(i);
+            case RK4v3 -> updateVelocityRK4v3(i);
+        }
+    }
+
+    private void updateVelocityEuler(int i) {
+        Particle p = particles[i];
+
+        Vector3d a = accel(i, p.position);
+
+        p.velocity.add(a.mul(settings.dt));
+    }
+
+    private void updateVelocityRK4(int i) {
+        double dt = settings.dt;
+
+        Particle p = particles[i];
+
+        Vector3d v1 = p.velocity;
+        Vector3d x1 = p.position;
+        Vector3d a1 = accel(i, x1);
+
+        Vector3d v2 = new Vector3d(v1).add(new Vector3d(a1).mul(dt / 2)); // v2 = v + a1 * dt/2
+        Vector3d x2 = new Vector3d(x1).add(new Vector3d(v2).mul(dt / 2)); // x2 = x + v2 * dt/2
+        Vector3d a2 = accel(i, x2);
+
+        Vector3d v3 = new Vector3d(v1).add(new Vector3d(a2).mul(dt / 2)); // v3 = v + a2 * dt/2
+        Vector3d x3 = new Vector3d(x1).add(new Vector3d(v3).mul(dt / 2)); // x3 = x + v3 * dt/2
+        Vector3d a3 = accel(i, x3);
+
+        Vector3d v4 = new Vector3d(v1).add(new Vector3d(a3).mul(dt)); // v4 = v + a3 * dt
+        Vector3d x4 = new Vector3d(x1).add(new Vector3d(v4).mul(dt)); // x4 = x + v4 * dt
+        Vector3d a4 = accel(i, x4);
+
+        // v += (a1 + 2 * a2 + 2 * a3 + a4) * dt/6
+        p.velocity.add(a1
+                .add(a2.mul(2))
+                .add(a3.mul(2))
+                .add(a4)
+                .mul(dt / 6));
+    }
+
+    private void updateVelocityRK4v2(int i) {
+        double dt = settings.dt;
+
+        Particle p = particles[i];
+
+        Vector3d v1 = p.velocity;
+        Vector3d x1 = p.position;
+        Vector3d a1 = accel(i, x1);
+
+
+        // v2 = v + a1 * dt/2
+        Vector3d v2 = new Vector3d(v1)
+                .add(new Vector3d(a1).mul(dt / 2));
+        // x2 = x + v2 * dt/2 + 0.5 * a1 * (dt/2)^2
+        Vector3d x2 = new Vector3d(x1)
+                .add(new Vector3d(v2).mul(dt / 2))
+                .add(new Vector3d(a1).mul(dt * dt / 8));
+        Vector3d a2 = accel(i, x2);
+
+        // v3 = v + a2 * dt/2
+        Vector3d v3 = new Vector3d(v1)
+                .add(new Vector3d(a2).mul(dt / 2));
+        // x3 = x + v3 * dt/2 + 0.5 * a2 * (dt/2)^2
+        Vector3d x3 = new Vector3d(x1)
+                .add(new Vector3d(v3).mul(dt / 2))
+                .add(new Vector3d(a2).mul(dt * dt / 8));
+        Vector3d a3 = accel(i, x3);
+
+        // v4 = v + a3 * dt
+        Vector3d v4 = new Vector3d(v1)
+                .add(new Vector3d(a3).mul(dt));
+        // x4 = x + v4 * dt + 0.5 * a3 * dt^2/2
+        Vector3d x4 = new Vector3d(x1)
+                .add(new Vector3d(v4).mul(dt))
+                .add(new Vector3d(a3).mul(dt * dt / 2));
+        Vector3d a4 = accel(i, x4);
+
+        // v += (a1 + 2 * a2 + 2 * a3 + a4) * dt/6
+        p.velocity.add(a1
+                .add(a2.mul(2))
+                .add(a3.mul(2))
+                .add(a4)
+                .mul(dt / 6));
+    }
+    private void updateVelocityRK4v3(int i) {
+        double dt = settings.dt;
+
+        Particle p = particles[i];
+
+        Vector3d x1 = p.position;
+        Vector3d a1 = accel(i, x1);
+
+        Vector3d v1 = p.velocity;
+        Vector3d x2 = new Vector3d(x1)
+                .add(new Vector3d(v1).mul(dt / 2))
+                .add(new Vector3d(a1).mul(dt * dt / 8));
+        Vector3d a2 = accel(i, x2);
+
+        Vector3d v2 = new Vector3d(v1)
+                .add(new Vector3d(a2).mul(dt / 2));
+        Vector3d x3 = new Vector3d(x1)
+                .add(new Vector3d(v2).mul(dt / 2))
+                .add(new Vector3d(a2).mul(dt * dt / 8));
+        Vector3d a3 = accel(i, x3);
+
+        Vector3d v3 = new Vector3d(v1)
+                .add(new Vector3d(a3).mul(dt));
+        Vector3d x4 = new Vector3d(x1)
+                .add(new Vector3d(v3).mul(dt))
+                .add(new Vector3d(a3).mul(dt * dt / 2));
+        Vector3d a4 = accel(i, x4);
+
+        // v += (a1 + 2 * a2 + 2 * a3 + a4) * dt/6
+        p.velocity.add(a1
+                .add(a2.mul(2))
+                .add(a3.mul(2))
+                .add(a4)
+                .mul(dt / 6));
+    }
+
+    private Vector3d accel(int i, Vector3d position) {
+        Particle p = particles[i];
+        var type = p.type;
+
+        int cx0 = (int) Math.floor(position.x / containerSize);
+        int cy0 = (int) Math.floor(position.y / containerSize);
+
+        Vector3d totalAccel = new Vector3d();
 
         for (int[] containerNeighbor : containerNeighborhood) {
             int cx = wrapContainerX(cx0 + containerNeighbor[0]);
@@ -429,19 +569,18 @@ public class Physics {
 
                 Particle q = particles[j];
 
-                Vector3d relativePosition = connection(p.position, q.position);
+                Vector3d relativePosition = connection(position, q.position);
 
                 double distanceSquared = relativePosition.lengthSquared();
                 // only check particles that are closer than or at rmax
                 if (distanceSquared != 0 && distanceSquared <= settings.rmax * settings.rmax) {
-
                     relativePosition.div(settings.rmax);
-                    Vector3d deltaV = accelerator.accelerate(settings.matrix.get(p.type, q.type), relativePosition);
-                    // apply force as acceleration
-                    p.velocity.add(deltaV.mul(settings.rmax * settings.force * settings.dt));
+                    Vector3d accel = accelerator.accelerate(settings.matrix.get(type, q.type), relativePosition);
+                    totalAccel.add(accel);
                 }
             }
         }
+        return totalAccel.mul(settings.rmax * settings.force);
     }
 
     private void updatePosition(int i) {
