@@ -16,9 +16,7 @@ public class Physics {
 
     public enum IntegrationMethod {
         EULER,
-        RK4v1,
-        RK4v2,
-        RK4v3
+        RK4
     }
 
     public Particle[] particles;
@@ -127,12 +125,9 @@ public class Physics {
         updateThreadsShouldRun.set(true);
 
         makeContainers();
+		
+		updateVelocity();
 
-        loadDistributor.distributeLoadEvenly(particles.length, preferredNumberOfThreads, i -> {
-            if (!updateThreadsShouldRun.get()) return false;
-            updateVelocity(i);
-            return true;
-        });
         loadDistributor.distributeLoadEvenly(particles.length, preferredNumberOfThreads, i -> {
             if (!updateThreadsShouldRun.get()) return false;
             updatePosition(i);
@@ -407,8 +402,7 @@ public class Physics {
         }
     }
 
-    private void updateVelocity(int i) {
-        Particle p = particles[i];
+    private void updateVelocity() {
 
         // apply friction before adding new velocity
         double frictionFactor = Math.pow(settings.friction, 60 * settings.dt);  // is normalized to 60 fps
@@ -416,128 +410,75 @@ public class Physics {
 
         switch (integrationMethod) {
             case EULER -> updateVelocityEuler(i);
-            case RK4v1 -> updateVelocityRK4(i);
-            case RK4v2 -> updateVelocityRK4v2(i);
-            case RK4v3 -> updateVelocityRK4v3(i);
+            case RK4 -> updateVelocityRK4(i);
         }
     }
 
     private void updateVelocityEuler(int i) {
-        Particle p = particles[i];
-
-        Vector3d a = accel(i, p.position);
-
-        p.velocity.add(a.mul(settings.dt));
+        loadDistributor.distributeLoadEvenly(particles.length, preferredNumberOfThreads, i -> {
+            if (!updateThreadsShouldRun.get()) return false;
+            Particle p = particles[i];
+			Vector3d a = accel(i, p.position);
+			p.velocity.add(a.mul(settings.dt));
+            return true;
+        });
     }
+	
+    private void updateVelocityRK4() {
+        particlesBuffer = particles
+        vector3d[] k1;
+        vector3d[] k2;
+        vector3d[] k3;
+        vector3d[] k4;
 
-    private void updateVelocityRK4(int i) {
-        double dt = settings.dt;
-
-        Particle p = particles[i];
-
-        Vector3d v1 = p.velocity;
-        Vector3d x1 = p.position;
-        Vector3d a1 = accel(i, x1);
-
-        Vector3d v2 = new Vector3d(v1).add(new Vector3d(a1).mul(dt / 2)); // v2 = v + a1 * dt/2
-        Vector3d x2 = new Vector3d(x1).add(new Vector3d(v2).mul(dt / 2)); // x2 = x + v2 * dt/2
-        Vector3d a2 = accel(i, x2);
-
-        Vector3d v3 = new Vector3d(v1).add(new Vector3d(a2).mul(dt / 2)); // v3 = v + a2 * dt/2
-        Vector3d x3 = new Vector3d(x1).add(new Vector3d(v3).mul(dt / 2)); // x3 = x + v3 * dt/2
-        Vector3d a3 = accel(i, x3);
-
-        Vector3d v4 = new Vector3d(v1).add(new Vector3d(a3).mul(dt)); // v4 = v + a3 * dt
-        Vector3d x4 = new Vector3d(x1).add(new Vector3d(v4).mul(dt)); // x4 = x + v4 * dt
-        Vector3d a4 = accel(i, x4);
-
-        // v += (a1 + 2 * a2 + 2 * a3 + a4) * dt/6
-        p.velocity.add(a1
+        // Maybe do getContainers() here?
+        loadDistributor.distributeLoadEvenly(particles.length, preferredNumberOfThreads, i -> {
+            if (!updateThreadsShouldRun.get()) return false;
+            k1[i] = accel(i, particlesBuffer[i].position)
+            return true;
+        });
+        
+        // Maybe do getContainers() here?
+        loadDistributor.distributeLoadEvenly(particles.length, preferredNumberOfThreads, i -> {
+            if (!updateThreadsShouldRun.get()) return false;
+            double dt = settings.dt * 0.5
+            Particle p = particlesBuffer[i]
+            p.position = p.position.add(p.velocity.mul(dt)).add(k3[i].mul(0.5).mul(dt*dt))
+            k2[i] = accel(i, p.position)
+            return true;
+        });
+        
+        // Maybe do getContainers() here?
+        loadDistributor.distributeLoadEvenly(particles.length, preferredNumberOfThreads, i -> {
+            if (!updateThreadsShouldRun.get()) return false;
+            double dt = settings.dt * 0.5
+            Particle p = particlesBuffer[i]
+            p.position = p.position.add(p.velocity.mul(dt)).add(k3[i].mul(0.5).mul(dt*dt))
+            k3[i] = accel(i, p.position)
+            return true;
+        });
+        
+        // Maybe do getContainers() here?
+        loadDistributor.distributeLoadEvenly(particles.length, preferredNumberOfThreads, i -> {
+            if (!updateThreadsShouldRun.get()) return false;
+            double dt = settings.dt
+            Particle p = particlesBuffer[i]
+            p.position = p.position.add(p.velocity.mul(dt)).add(k3[i].mul(0.5).mul(dt*dt))
+            k4[i] = accel(i, p.position)
+            return true;
+        });
+        
+        loadDistributor.distributeLoadEvenly(particles.length, preferredNumberOfThreads, i -> {
+            if (!updateThreadsShouldRun.get()) return false;
+            double dt = settings.dt
+            Particle p = particles[i]
+            p.velocity.add(a1
                 .add(a2.mul(2))
                 .add(a3.mul(2))
                 .add(a4)
                 .mul(dt / 6));
-    }
-
-    private void updateVelocityRK4v2(int i) {
-        double dt = settings.dt;
-
-        Particle p = particles[i];
-
-        Vector3d v1 = p.velocity;
-        Vector3d x1 = p.position;
-        Vector3d a1 = accel(i, x1);
-
-
-        // v2 = v + a1 * dt/2
-        Vector3d v2 = new Vector3d(v1)
-                .add(new Vector3d(a1).mul(dt / 2));
-        // x2 = x + v2 * dt/2 + 0.5 * a1 * (dt/2)^2
-        Vector3d x2 = new Vector3d(x1)
-                .add(new Vector3d(v2).mul(dt / 2))
-                .add(new Vector3d(a1).mul(dt * dt / 8));
-        Vector3d a2 = accel(i, x2);
-
-        // v3 = v + a2 * dt/2
-        Vector3d v3 = new Vector3d(v1)
-                .add(new Vector3d(a2).mul(dt / 2));
-        // x3 = x + v3 * dt/2 + 0.5 * a2 * (dt/2)^2
-        Vector3d x3 = new Vector3d(x1)
-                .add(new Vector3d(v3).mul(dt / 2))
-                .add(new Vector3d(a2).mul(dt * dt / 8));
-        Vector3d a3 = accel(i, x3);
-
-        // v4 = v + a3 * dt
-        Vector3d v4 = new Vector3d(v1)
-                .add(new Vector3d(a3).mul(dt));
-        // x4 = x + v4 * dt + 0.5 * a3 * dt^2/2
-        Vector3d x4 = new Vector3d(x1)
-                .add(new Vector3d(v4).mul(dt))
-                .add(new Vector3d(a3).mul(dt * dt / 2));
-        Vector3d a4 = accel(i, x4);
-
-        // v += (a1 + 2 * a2 + 2 * a3 + a4) * dt/6
-        p.velocity.add(a1
-                .add(a2.mul(2))
-                .add(a3.mul(2))
-                .add(a4)
-                .mul(dt / 6));
-    }
-    private void updateVelocityRK4v3(int i) {
-        double dt = settings.dt;
-
-        Particle p = particles[i];
-
-        Vector3d x1 = p.position;
-        Vector3d a1 = accel(i, x1);
-
-        Vector3d v1 = p.velocity;
-        Vector3d x2 = new Vector3d(x1)
-                .add(new Vector3d(v1).mul(dt / 2))
-                .add(new Vector3d(a1).mul(dt * dt / 8));
-        Vector3d a2 = accel(i, x2);
-
-        Vector3d v2 = new Vector3d(v1)
-                .add(new Vector3d(a2).mul(dt / 2));
-        Vector3d x3 = new Vector3d(x1)
-                .add(new Vector3d(v2).mul(dt / 2))
-                .add(new Vector3d(a2).mul(dt * dt / 8));
-        Vector3d a3 = accel(i, x3);
-
-        Vector3d v3 = new Vector3d(v1)
-                .add(new Vector3d(a3).mul(dt));
-        Vector3d x4 = new Vector3d(x1)
-                .add(new Vector3d(v3).mul(dt))
-                .add(new Vector3d(a3).mul(dt * dt / 2));
-        Vector3d a4 = accel(i, x4);
-
-        // v += (a1 + 2 * a2 + 2 * a3 + a4) * dt/6
-        p.velocity.add(a1
-                .add(a2.mul(2))
-                .add(a3.mul(2))
-                .add(a4)
-                .mul(dt / 6));
-    }
+            return true;
+        });
 
     private Vector3d accel(int i, Vector3d position) {
         Particle p = particles[i];
@@ -584,12 +525,14 @@ public class Physics {
     }
 
     private void updatePosition(int i) {
-        Particle p = particles[i];
-
-        // pos += vel * dt
-        p.velocity.mulAdd(settings.dt, p.position, p.position);
-
-        ensurePosition(p.position);
+        loadDistributor.distributeLoadEvenly(particles.length, preferredNumberOfThreads, i -> {
+            if (!updateThreadsShouldRun.get()) return false;
+            Particle p = particles[i];
+			// pos += vel * dt
+			p.velocity.mulAdd(settings.dt, p.position, p.position);
+			ensurePosition(p.position);
+            return true;
+        });
     }
 
     /**
