@@ -151,14 +151,10 @@ public class Physics {
     }
 
     /**
-     * Shutdown the internal thread pool.
-     * Blocks until all tasks have completed execution.
-     *
-     * @param timeoutMilliseconds how long to wait for update threads to finish their execution (in milliseconds)
-     * @return {@code true} if all tasks terminated and {@code false} if the timeout elapsed before termination
+     * Interrupts all ongoing computations immediately.
      */
-    public boolean shutdown(long timeoutMilliseconds) throws InterruptedException {
-        return loadDistributor.shutdown(timeoutMilliseconds);
+    public void kill() {
+        loadDistributor.kill();
     }
 
     // PUBLIC CONTROL METHODS:

@@ -13,9 +13,9 @@ import java.util.concurrent.atomic.AtomicReference;
  *     // do something expensive
  * });
  * </pre>
- *
+ * <p>
  * To start the thread, call {@link #start(Callback)}.<br>
- * To stop the thread, call {@link #stop(long millis)}.<br>
+ * To stop the thread, call {@link #stop(long millis)} or {@link #kill()}.<br>
  * To execute code synchronously with the loop, use {@link #enqueue(Runnable)}.
  * Example:
  * <pre>
@@ -48,7 +48,7 @@ public class Loop {
 
     /**
      * Will be invoked repeatedly by the loop started with {@link #start(Callback)}
-     * until {@link #stop(long)} is called.
+     * until {@link #stop(long)} or {@link #kill()} is called.
      */
     public interface Callback {
         /**
@@ -121,28 +121,64 @@ public class Loop {
     }
 
     /**
-     * Tells the loop to stop and waits for the current iteration to finish.
+     * Blocks until the current iteration has finished, then stops the loop.
+     * If the waiting takes longer than the given time, the loop won't be stopped
+     * and everything continues just as before.
+     * <p>
+     * The return value indicates whether the loop could be stopped.
+     * </p>
+     * <p>
      * A timeout of 0 means to wait forever.
+     * </p>
      *
      * @param millis the time to wait for the loop to finish in milliseconds
-     * @return whether the thread could be stopped
+     * @return whether the loop could be stopped
      */
-    public synchronized boolean stop(long millis) throws InterruptedException {
-
-        assert loopThread != null : "Thread is null";
-        if (!loopThread.isAlive()) {
-            throw new IllegalStateException("Thread is not running.");
+    public synchronized boolean stop(long millis) {
+        if (loopThread == null) return true;  // already dead or never started
+        if (!loopThread.isAlive()) { // already dead
+            loopThread = null;
+            return true;
         }
-
-        loopShouldRun.set(false);
-        loopThread.join(millis);  // A timeout of 0 means to wait forever.
-
+        boolean oldValue = loopShouldRun.getAndSet(false);
+        try {
+            loopThread.join(millis);  // A timeout of 0 means to wait forever.
+        } catch (InterruptedException e) {
+            // ignore
+        }
         if (loopThread.isAlive()) {
+            // iteration didn't finish in time
+            loopShouldRun.set(oldValue); // pretend nothing happened
             return false;
+        } else {
+            // iteration finished in time
+            loopThread = null;
+            return true;
         }
+    }
 
+    /**
+     * Blocks until the current iteration has finished, then stops the loop.
+     * Shorthand for {@link #stop(long)} with a timeout of 0.
+     *
+     * @return
+     */
+    public synchronized boolean stop() {
+        return stop(0);
+    }
+
+    /**
+     * Aborts the loop immediately without waiting for the current iteration to finish.
+     */
+    public synchronized void kill() {
+        if (loopThread == null) return;  // already dead or never started
+        if (!loopThread.isAlive()) { // already dead
+            loopThread = null;
+            return;
+        }
+        loopShouldRun.set(false);
+        loopThread.interrupt();
         loopThread = null;
-        return true;
     }
 
     private double computeDt() {
@@ -155,6 +191,7 @@ public class Loop {
      * Unlike the value given to the callback in {@link #start(Callback)}, this value is not limited by {@link #maxDt}.
      * Note that therefore the return value of this method can be very small if <code>{@link #pause} == true</code>,
      * as there is no work to be done in the loop.
+     *
      * @return how much time passed between the last two iterations of the loop, in seconds.
      */
     public double getActualDt() {
@@ -166,6 +203,7 @@ public class Loop {
      * Unlike the value given to the callback in {@link #start(Callback)}, this value is not limited by {@link #maxDt}.
      * Note that therefore the return value of this method can be very high if <code>{@link #pause} == true</code>,
      * as there is no work to be done in the loop.
+     *
      * @return average framerate in frames per second.
      * @see #getActualDt()
      */
