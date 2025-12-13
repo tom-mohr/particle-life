@@ -1,5 +1,13 @@
 # 🦠 Particle Life Framework
 
+> ⚠️ **Source Code Moved**
+>
+> This source code is now developed as part of  
+> **https://github.com/tom-mohr/particle-life-app**.
+>
+> This repository will not receive further updates.
+
+
 A Java framework that can simulate a variety of particle systems. It uses space partitioning and parallelization to achieve a significant speedup.
 
 It can be configured to use the rules of Particle Life, a particle system showing life-like behaviour.
